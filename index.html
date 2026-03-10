@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+    <!-- 移动端全屏适配：viewport-fit=cover 开启安全区域适配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- 移动端全屏相关 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="%VITE_SITE_LOGO%" />
+    <link rel="apple-touch-icon" href="%VITE_SITE_APPLE_LOGO%" />
+    <link rel="bookmark" href="%VITE_SITE_APPLE_LOGO%" />
+    <link rel="apple-touch-icon-precomposed" sizes="200x200" href="%VITE_SITE_APPLE_LOGO%" />
+    <meta name="description" content="%VITE_SITE_DES%" />
+    <meta name="keywords" content="%VITE_SITE_KEYWORDS%" />
+    <meta name="author" content="%VITE_SITE_AUTHOR%" />
+    <meta name="theme-color" content="#424242" />
+    <title>%VITE_SITE_NAME%</title>
+    <!-- HarmonyOS Sans -->
+    <link rel="stylesheet" href="https://s1.hdslb.com/bfs/static/jinkela/long/font/regular.css" />
+    <!-- IE Out -->
+    <script>
+      if (/*@cc_on!@*/ false || (!!window.MSInputMethodContext && !!document.documentMode))
+        window.location.href =
+          'https://support.dmeng.net/upgrade-your-browser.html?referrer=' +
+          encodeURIComponent(window.location.href);
+    </script>
+  </head>
+
+  <body>
+    <!-- 主体内容 -->
+    <div id="app"></div>
+    <!-- noscript -->
+    <noscript>
+      <div style="text-align: center">请开启 JavaScript</div>
+    </noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

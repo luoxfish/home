@@ -1,0 +1,31 @@
+# 静态资源（JS/CSS/字体）长期缓存
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 图片资源缓存
+/images/*
+  Cache-Control: public, max-age=2592000
+
+# 字体资源缓存
+/font/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# PWA Service Worker 不缓存
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Manifest 文件
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+
+# HTML 入口文件不缓存，保证更新即时生效
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# 全局安全头
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
