@@ -3,10 +3,11 @@
     <Transition name="fade" mode="out-in">
       <div v-if="!store.playerState || !store.playerLrcShow" class="power">
         <span>
-          <span :class="startYear < fullYear ? 'c-hidden' : 'hidden'">Copyright&nbsp;</span>
+          <span :class="startYear < fullYear ? 'c-hidden' : 'hidden'"
+            >Copyright&nbsp;</span
+          >
           &copy;
-          <span v-if="startYear < fullYear"
-            class="site-start">
+          <span v-if="startYear < fullYear" class="site-start">
             {{ startYear }}
             -
           </span>
@@ -16,14 +17,19 @@
         <!-- 以下信息请不要修改哦 -->
         <span class="hidden">
           &amp;&nbsp;Made&nbsp;by
-          <a :href="config.github" target="_blank">
+          <a :href="config.github" target="_blank" rel="noopener noreferrer">
             {{ config.author }}
           </a>
         </span>
         <!-- 站点备案 -->
         <span>
           &amp;
-          <a v-if="siteIcp" href="https://beian.miit.gov.cn" target="_blank">
+          <a
+            v-if="siteIcp"
+            href="https://beian.miit.gov.cn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {{ siteIcp }}
           </a>
         </span>
@@ -32,7 +38,7 @@
         <Transition name="fade" mode="out-in">
           <div class="lrc-all" :key="store.getPlayerLrc">
             <music-one theme="filled" size="18" fill="#efefef" />
-            <span class="lrc-text text-hidden" v-html="store.getPlayerLrc" />
+            <span class="lrc-text text-hidden">{{ store.getPlayerLrc }}</span>
             <music-one theme="filled" size="18" fill="#efefef" />
           </div>
         </Transition>
@@ -52,8 +58,9 @@ const fullYear = new Date().getFullYear();
 // 加载配置数据
 // const siteStartDate = ref(import.meta.env.VITE_SITE_START);
 const startYear = ref(
-  import.meta.env.VITE_SITE_START?.length >= 4 ? 
-  import.meta.env.VITE_SITE_START.substring(0, 4) : null
+  import.meta.env.VITE_SITE_START?.length >= 4
+    ? import.meta.env.VITE_SITE_START.substring(0, 4)
+    : null,
 );
 const siteIcp = ref(import.meta.env.VITE_SITE_ICP);
 const siteAuthor = ref(import.meta.env.VITE_SITE_AUTHOR);

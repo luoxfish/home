@@ -7,18 +7,51 @@
     v-show="store.musicOpenState"
   >
     <div class="btns">
-      <span @click="openMusicList()">音乐列表</span>
-      <span @click="store.musicOpenState = false">回到一言</span>
+      <button type="button" @click="openMusicList">音乐列表</button>
+      <button type="button" @click="store.musicOpenState = false">
+        回到一言
+      </button>
     </div>
     <div class="control">
-      <go-start theme="filled" size="30" fill="#efefef" @click="changeMusicIndex(0)" />
+      <button
+        type="button"
+        aria-label="上一首"
+        :disabled="!store.musicIsOk"
+        @click="changeMusicIndex(0)"
+      >
+        <go-start theme="filled" size="30" fill="#efefef" />
+      </button>
       <Transition name="fade" mode="out-in">
-        <div :key="store.playerState" class="state" @click="changePlayState">
-          <play-one theme="filled" size="50" fill="#efefef" v-show="!store.playerState" />
-          <pause theme="filled" size="50" fill="#efefef" v-show="store.playerState" />
-        </div>
+        <button
+          type="button"
+          :key="store.playerState"
+          class="state"
+          :aria-label="store.playerState ? '暂停' : '播放'"
+          :disabled="!store.musicIsOk"
+          @click="changePlayState"
+        >
+          <play-one
+            theme="filled"
+            size="50"
+            fill="#efefef"
+            v-show="!store.playerState"
+          />
+          <pause
+            theme="filled"
+            size="50"
+            fill="#efefef"
+            v-show="store.playerState"
+          />
+        </button>
       </Transition>
-      <go-end theme="filled" size="30" fill="#efefef" @click="changeMusicIndex(1)" />
+      <button
+        type="button"
+        aria-label="下一首"
+        :disabled="!store.musicIsOk"
+        @click="changeMusicIndex(1)"
+      >
+        <go-end theme="filled" size="30" fill="#efefef" />
+      </button>
     </div>
     <div class="menu">
       <div class="name" v-show="!volumeShow">
@@ -30,7 +63,12 @@
       </div>
       <div class="volume" v-show="volumeShow">
         <div class="icon">
-          <volume-mute theme="filled" size="24" fill="#efefef" v-if="volumeNum == 0" />
+          <volume-mute
+            theme="filled"
+            size="24"
+            fill="#efefef"
+            v-if="volumeNum == 0"
+          />
           <volume-small
             theme="filled"
             size="24"
@@ -39,33 +77,49 @@
           />
           <volume-notice theme="filled" size="24" fill="#efefef" v-else />
         </div>
-        <el-slider v-model="volumeNum" :show-tooltip="false" :min="0" :max="1" :step="0.01" />
+        <el-slider
+          v-model="volumeNum"
+          :show-tooltip="false"
+          :min="0"
+          :max="1"
+          :step="0.01"
+        />
       </div>
     </div>
   </div>
   <!-- 音乐列表弹窗 -->
-  <Transition name="fade" mode="out-in">
-    <div class="music-list" v-show="musicListShow" @click="closeMusicList()">
-      <Transition name="zoom">
-        <div class="list" v-show="musicListShow" @click.stop>
-          <close-one
-            class="close"
-            theme="filled"
-            size="28"
-            fill="#ffffff60"
-            @click="closeMusicList()"
-          />
-          <Player
-            ref="playerRef"
-            :songServer="playerData.server"
-            :songType="playerData.type"
-            :songId="playerData.id"
-            :volume="volumeNum"
-          />
-        </div>
-      </Transition>
-    </div>
-  </Transition>
+  <Teleport to="body">
+    <Transition name="fade" mode="out-in">
+      <div class="music-list" v-show="musicListShow" @click="closeMusicList()">
+        <Transition name="zoom">
+          <div
+            class="list"
+            v-show="musicListShow"
+            role="dialog"
+            aria-modal="true"
+            aria-label="音乐列表"
+            @click.stop
+          >
+            <button
+              type="button"
+              class="close"
+              aria-label="关闭音乐列表"
+              @click="closeMusicList"
+            >
+              <close-one theme="filled" size="28" fill="#ffffff60" />
+            </button>
+            <Player
+              ref="playerRef"
+              :songServer="playerData.server"
+              :songType="playerData.type"
+              :songId="playerData.id"
+              :volume="volumeNum"
+            />
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
@@ -81,65 +135,64 @@ import {
 } from "@icon-park/vue-next";
 import Player from "@/components/Player.vue";
 import { mainStore } from "@/store";
+import { useDialog } from "@/composables/useDialog.js";
 const store = mainStore();
-
-// 音量条数据
 const volumeShow = ref(false);
-const volumeNum = ref(store.musicVolume ? store.musicVolume : 0.7);
-
-// 播放列表数据
-const musicListShow = ref(false);
+const volumeNum = ref(store.musicVolume ?? 0.7);
+const musicListShow = computed({
+  get: () => store.musicListOpen,
+  set: (value) => {
+    store.musicListOpen = value;
+  },
+});
 const playerRef = ref(null);
-const playerData = reactive({
+const playerData = {
   server: import.meta.env.VITE_SONG_SERVER,
   type: import.meta.env.VITE_SONG_TYPE,
   id: import.meta.env.VITE_SONG_ID,
-});
-
-// 开启播放列表
+};
 const openMusicList = () => {
   musicListShow.value = true;
-  playerRef.value.toggleList();
 };
-
-// 关闭播放列表
 const closeMusicList = () => {
   musicListShow.value = false;
-  playerRef.value.toggleList();
 };
-
-// 音乐播放暂停
 const changePlayState = () => {
-  playerRef.value.playToggle();
+  if (store.musicIsOk) playerRef.value?.playToggle();
 };
-
-// 音乐上下曲
 const changeMusicIndex = (type) => {
-  playerRef.value.changeSong(type);
+  if (store.musicIsOk) playerRef.value?.changeSong(type);
 };
-
-onMounted(() => {
-  // 空格键事件
-  window.addEventListener("keydown", (e) => {
-    if (!store.musicIsOk) {
-      return;
-    }
-    if (e.code == "Space") {
-      changePlayState();
-    }
-  });
-  // 挂载方法至 window
-  window.$openList = openMusicList;
+const handleKeydown = (event) => {
+  if (
+    event.code !== "Space" ||
+    event.repeat ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    !store.musicIsOk
+  )
+    return;
+  if (
+    event.target instanceof Element &&
+    event.target.closest(
+      'input, textarea, select, button, a, [contenteditable="true"], [role="slider"]',
+    )
+  )
+    return;
+  event.preventDefault();
+  changePlayState();
+};
+onMounted(() => window.addEventListener("keydown", handleKeydown));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown);
+  store.musicListOpen = false;
 });
-
-// 监听音量变化
-watch(
-  () => volumeNum.value,
-  (value) => {
-    store.musicVolume = value;
-    playerRef.value.changeVolume(store.musicVolume);
-  },
-);
+useDialog(() => store.musicListOpen, closeMusicList, ".music-list .list");
+watch(volumeNum, (value) => {
+  store.musicVolume = value;
+  playerRef.value?.changeVolume(value);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -159,7 +212,7 @@ watch(
     display: flex;
     align-items: center;
     margin-bottom: 6px;
-    span {
+    button {
       background: #ffffff26;
       padding: 2px 8px;
       border-radius: 6px;
@@ -258,16 +311,18 @@ watch(
   height: 100%;
   background-color: #00000080;
   backdrop-filter: blur(20px);
-  z-index: 1;
+  z-index: 100;
   .list {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    top: calc(50% - 300px);
     left: calc(50% - 320px);
     width: 640px;
-    height: 600px;
+    height: min(600px, 90dvh);
+    max-height: 90vh;
+    top: 50%;
+    translate: 0 -50%;
     background-color: #ffffff66;
     border-radius: 6px;
     z-index: 999;

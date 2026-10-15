@@ -2,8 +2,8 @@
   "framework": {
     "name": "vite"
   },
-  "buildCommand": "npm run build",
+  "buildCommand": "npx --yes pnpm@10.11.0 run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "nodeVersion": "18"
+  "installCommand": "npx --yes pnpm@10.11.0 install --frozen-lockfile",
+  "nodeVersion": "22.11.0"
 }

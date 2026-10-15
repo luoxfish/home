@@ -1,10 +1,16 @@
 <template>
   <div :class="store.mobileOpenState ? 'right' : 'right hidden'">
     <!-- 移动端 Logo -->
-    <div class="logo text-hidden" @click="store.mobileFuncState = !store.mobileFuncState">
+    <button
+      type="button"
+      class="logo text-hidden"
+      aria-label="切换移动端功能区"
+      :aria-expanded="store.mobileFuncState"
+      @click="store.mobileFuncState = !store.mobileFuncState"
+    >
       <span class="bg">{{ siteUrl[0] }}</span>
       <span class="sm">.{{ siteUrl[1] }}</span>
-    </div>
+    </button>
     <!-- 功能区 -->
     <Func />
     <!-- 网站链接 -->
@@ -13,21 +19,14 @@
 </template>
 
 <script setup>
+import { splitSiteUrl } from "@/utils/links.js";
 import { mainStore } from "@/store";
 import Func from "@/views/Func/index.vue";
 import Link from "@/components/Links.vue";
 const store = mainStore();
 
 // 站点链接
-const siteUrl = computed(() => {
-  const url = import.meta.env.VITE_SITE_URL;
-  if (!url) return "imsyy.top".split(".");
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    const urlFormat = url.replace(/^(https?:\/\/)/, "");
-    return urlFormat.split(".");
-  }
-  return url.split(".");
-});
+const siteUrl = computed(() => splitSiteUrl(import.meta.env.VITE_SITE_URL));
 </script>
 
 <style lang="scss" scoped>

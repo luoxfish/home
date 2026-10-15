@@ -3,14 +3,32 @@
   <div class="message">
     <!-- Logo -->
     <div class="logo">
-      <img class="logo-img" :src="siteLogo" alt="logo" />
-      <div :class="{ name: true, 'text-hidden': true, long: siteUrl[0].length >= 6 }">
+      <img
+        class="logo-img"
+        :src="siteLogo"
+        :alt="siteUrl.join('.') + ' 标志'"
+        width="120"
+        height="120"
+      />
+      <div
+        :class="{
+          name: true,
+          'text-hidden': true,
+          long: siteUrl[0].length >= 6,
+        }"
+      >
         <span class="bg">{{ siteUrl[0] }}</span>
         <span class="sm">.{{ siteUrl[1] }}</span>
       </div>
     </div>
     <!-- 简介 -->
-    <div class="description cards" @click="changeBox">
+    <button
+      type="button"
+      class="description cards"
+      :aria-expanded="store.boxOpenState"
+      aria-label="切换更多信息"
+      @click="changeBox"
+    >
       <div class="content">
         <Icon size="16">
           <QuoteLeft />
@@ -25,11 +43,12 @@
           <QuoteRight />
         </Icon>
       </div>
-    </div>
+    </button>
   </div>
 </template>
 
 <script setup>
+import { splitSiteUrl } from "@/utils/links.js";
 import { Icon } from "@vicons/utils";
 import { QuoteLeft, QuoteRight } from "@vicons/fa";
 import { Error } from "@icon-park/vue-next";
@@ -39,15 +58,7 @@ const store = mainStore();
 // 主页站点logo
 const siteLogo = import.meta.env.VITE_SITE_MAIN_LOGO;
 // 站点链接
-const siteUrl = computed(() => {
-  const url = import.meta.env.VITE_SITE_URL;
-  if (!url) return "imsyy.top".split(".");
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    const urlFormat = url.replace(/^(https?:\/\/)/, "");
-    return urlFormat.split(".");
-  }
-  return url.split(".");
-});
+const siteUrl = computed(() => splitSiteUrl(import.meta.env.VITE_SITE_URL));
 
 // 简介区域文字
 const descriptionText = reactive({
@@ -98,6 +109,7 @@ watch(
     .logo-img {
       border-radius: 50%;
       width: 120px;
+      height: auto;
       flex-shrink: 0;
     }
 
@@ -170,6 +182,8 @@ watch(
   }
 
   .description {
+    width: 100%;
+    text-align: left;
     padding: 1rem;
     margin-top: 1.5rem;
     max-width: 460px;

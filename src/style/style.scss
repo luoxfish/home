@@ -6,6 +6,7 @@ GitHub：https://github.com/imsyy/home
 */
 
 @charset "utf-8";
+@use "./global.scss";
 
 /*全局样式*/
 
@@ -26,7 +27,6 @@ a,
 p {
   margin: 0;
   padding: 0;
-  user-select: none;
   text-decoration: none;
   color: #fff;
   box-sizing: border-box;
@@ -218,10 +218,12 @@ a:hover {
 
   &.active {
     opacity: 0.5;
-    transform: scale(0.5);
+    scale: 0.5;
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 720px),
+    (pointer: coarse),
+    (prefers-reduced-motion: reduce) {
     display: none;
   }
 }
@@ -238,4 +240,44 @@ scrollbar {
 scrollbar-thumb {
   border-radius: 10px;
   background-color: #eeeeee;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+a,
+button,
+input,
+[tabindex="0"] {
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+  }
+}
+.memorial-day {
+  filter: grayscale(100%);
+}
+.wallpaper-toggle {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  right: 16px;
+  z-index: 20;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #00000080;
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

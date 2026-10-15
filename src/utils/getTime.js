@@ -6,12 +6,25 @@ import dayjs from "dayjs";
 export const getCurrentTime = () => {
   let time = new Date();
   let year = time.getFullYear();
-  let month = time.getMonth() + 1 < 10 ? "0" + (time.getMonth() + 1) : time.getMonth() + 1;
+  let month =
+    time.getMonth() + 1 < 10
+      ? "0" + (time.getMonth() + 1)
+      : time.getMonth() + 1;
   let day = time.getDate() < 10 ? "0" + time.getDate() : time.getDate();
   let hour = time.getHours() < 10 ? "0" + time.getHours() : time.getHours();
-  let minute = time.getMinutes() < 10 ? "0" + time.getMinutes() : time.getMinutes();
-  let second = time.getSeconds() < 10 ? "0" + time.getSeconds() : time.getSeconds();
-  let weekday = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  let minute =
+    time.getMinutes() < 10 ? "0" + time.getMinutes() : time.getMinutes();
+  let second =
+    time.getSeconds() < 10 ? "0" + time.getSeconds() : time.getSeconds();
+  let weekday = [
+    "星期日",
+    "星期一",
+    "星期二",
+    "星期三",
+    "星期四",
+    "星期五",
+    "星期六",
+  ];
   let currentTime = {
     year,
     month,
@@ -90,8 +103,7 @@ export const helloInit = () => {
     hello = "夜深了";
   }
   ElMessage({
-    dangerouslyUseHTMLString: true,
-    message: `<strong>${hello}</strong> 欢迎来到我的主页`,
+    message: `${hello}，欢迎来到我的主页`,
   });
 };
 
@@ -110,9 +122,7 @@ export const checkDays = () => {
   const key = `${mon}.${date}`;
   if (Object.prototype.hasOwnProperty.call(anniversaries, key)) {
     console.log(`今天是${anniversaries[key]}`);
-    const gray = document.createElement("style");
-    gray.innerHTML = "html{filter: grayscale(100%)}";
-    document.head.appendChild(gray);
+    document.documentElement.classList.add("memorial-day");
     ElMessage({
       message: `今天是${anniversaries[key]}`,
       duration: 14000,
@@ -121,24 +131,4 @@ export const checkDays = () => {
   }
 };
 
-// 建站日期统计
-export const siteDateStatistics = (startDate) => {
-  const currentDate = new Date();
-  let years = currentDate.getFullYear() - startDate.getFullYear();
-  let months = currentDate.getMonth() - startDate.getMonth();
-  let days = currentDate.getDate() - startDate.getDate();
-
-  // 如果天数或月份为负数，则调整天数和月份
-  if (days < 0) {
-    months--;
-    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0);
-    days += lastMonth.getDate();
-  }
-
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  return `本站已经苟活了 ${years} 年 ${months} 月 ${days} 天`;
-};
+export { siteDateStatistics } from "./date.js";

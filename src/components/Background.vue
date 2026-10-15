@@ -1,13 +1,13 @@
 <template>
   <div :class="store.backgroundShow ? 'cover show' : 'cover'">
     <img
-      v-show="store.imgLoadStatus"
+      v-show="imageVisible"
       :src="bgUrl"
       class="bg"
-      alt="cover"
+      alt=""
+      decoding="async"
       @load="imgLoadComplete"
-      @error.once="imgLoadError"
-      @animationend="imgAnimationEnd"
+      @error="imgLoadError"
     />
     <div :class="store.backgroundShow ? 'gray hidden' : 'gray'" />
     <Transition name="fade" mode="out-in">
@@ -16,6 +16,7 @@
         class="down"
         :href="bgUrl"
         target="_blank"
+        rel="noopener noreferrer"
       >
         下载壁纸
       </a>
@@ -25,76 +26,41 @@
 
 <script setup>
 import { mainStore } from "@/store";
-import { Error } from "@icon-park/vue-next";
-
 const store = mainStore();
-const bgUrl = ref(null);
-const imgTimeout = ref(null);
-const emit = defineEmits(["loadComplete"]);
-
-// 壁纸随机数
-// 请依据文件夹内的图片个数修改 Math.random() 后面的第一个数字
-const bgRandom = Math.floor(Math.random() * 10 + 1);
-
-// 更换壁纸链接
-const changeBg = (type) => {
-  if (type == 0) {
-    bgUrl.value = `/images/background${bgRandom}.jpg`;
-  } else if (type == 1) {
-    bgUrl.value = "https://api.dujin.org/bing/1920.php";
-  } else if (type == 2) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/views";
-  } else if (type == 3) {
-    bgUrl.value = "https://api.vvhan.com/api/wallpaper/acg";
+const defaultBg = "/images/background1.jpg";
+const bgUrl = ref(defaultBg);
+const imageVisible = ref(false);
+let timeout;
+const clearImageTimeout = () => clearTimeout(timeout);
+const imgLoadComplete = () => {
+  clearImageTimeout();
+  imageVisible.value = true;
+};
+const imgLoadError = () => {
+  clearImageTimeout();
+  imageVisible.value = false;
+  if (bgUrl.value !== defaultBg) {
+    bgUrl.value = defaultBg;
+    timeout = setTimeout(clearImageTimeout, 8000);
   }
 };
-
-// 图片加载完成
-const imgLoadComplete = () => {
-  imgTimeout.value = setTimeout(
-    () => {
-      store.setImgLoadStatus(true);
-    },
-    Math.floor(Math.random() * (600 - 300 + 1)) + 300,
-  );
-};
-
-// 图片动画完成
-const imgAnimationEnd = () => {
-  console.log("壁纸加载且动画完成");
-  // 加载完成事件
-  emit("loadComplete");
-};
-
-// 图片显示失败
-const imgLoadError = () => {
-  console.error("壁纸加载失败：", bgUrl.value);
-  ElMessage({
-    message: "壁纸加载失败，已临时切换回默认",
-    icon: h(Error, {
-      theme: "filled",
-      fill: "#efefef",
-    }),
-  });
-  bgUrl.value = `/images/background${bgRandom}.jpg`;
-};
-
-// 监听壁纸切换
 watch(
   () => store.coverType,
-  (value) => {
-    changeBg(value);
+  (type) => {
+    clearImageTimeout();
+    imageVisible.value = false;
+    bgUrl.value =
+      {
+        0: "/images/background" + Math.ceil(Math.random() * 10 || 1) + ".jpg",
+        1: "https://api.dujin.org/bing/1920.php",
+        2: "https://api.vvhan.com/api/wallpaper/views",
+        3: "https://api.vvhan.com/api/wallpaper/acg",
+      }[type] || defaultBg;
+    timeout = setTimeout(imgLoadError, 8000);
   },
+  { immediate: true },
 );
-
-onMounted(() => {
-  // 加载壁纸
-  changeBg(store.coverType);
-});
-
-onBeforeUnmount(() => {
-  clearTimeout(imgTimeout.value);
-});
+onBeforeUnmount(clearImageTimeout);
 </script>
 
 <style lang="scss" scoped>
@@ -133,7 +99,8 @@ onBeforeUnmount(() => {
     top: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.5) 100%),
+    background-image:
+      radial-gradient(rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.5) 100%),
       radial-gradient(rgba(0, 0, 0, 0) 33%, rgba(0, 0, 0, 0.3) 166%);
 
     transition: 1.5s;

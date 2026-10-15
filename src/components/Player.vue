@@ -1,6 +1,11 @@
 <template>
+  <div v-if="loadError" role="alert" class="player-error">
+    <p>{{ loadError }}</p>
+    <button type="button" @click="initialize">重试加载歌单</button>
+  </div>
+  <p v-else-if="!playList.length" role="status">歌单加载中</p>
   <APlayer
-    v-if="playList[0]"
+    v-else
     ref="player"
     :audio="playList"
     :autoplay="store.playerAutoplay"
@@ -36,6 +41,8 @@ const playList = ref([]);
 
 // 歌曲播放项
 const playIndex = ref(0);
+const loadError = ref("");
+let controller;
 
 // 配置项
 const props = defineProps({
@@ -83,43 +90,45 @@ const listHeight = computed(() => {
   return props.listMaxHeight + "px";
 });
 
-// 初始化播放器
-onMounted(() => {
-  nextTick(() => {
-    try {
-      getPlayerList(props.songServer, props.songType, props.songId).then((res) => {
-        console.log(res);
-        // 更改播放器加载状态
-        store.musicIsOk = true;
-        // 生成歌单
-        playList.value = res;
-        console.log("音乐加载完成");
-        console.log(playList.value);
-        console.log(playIndex.value, playList.value.length, props.volume);
-      });
-    } catch (err) {
-      console.error(err);
-      store.musicIsOk = false;
-      ElMessage({
-        message: "播放器加载失败",
-        grouping: true,
-        icon: h(PlayWrong, {
-          theme: "filled",
-          fill: "#efefef",
-        }),
-      });
-    }
-  });
+const initialize = async () => {
+  controller?.abort();
+  controller = new AbortController();
+  const currentController = controller;
+  loadError.value = "";
+  store.musicIsOk = false;
+  try {
+    const tracks = await getPlayerList(
+      props.songServer,
+      props.songType,
+      props.songId,
+      { signal: currentController.signal },
+    );
+    if (currentController.signal.aborted) return;
+    playList.value = tracks;
+    await nextTick();
+    store.musicIsOk = Boolean(player.value);
+  } catch (error) {
+    if (!currentController.signal.aborted)
+      loadError.value = error.message || "播放器加载失败";
+  }
+};
+onMounted(initialize);
+onBeforeUnmount(() => {
+  controller?.abort();
+  store.musicIsOk = false;
+  store.playerState = false;
 });
 
 // 播放
 const onPlay = () => {
-  console.log("播放");
   playIndex.value = player.value.aplayer.index;
   // 播放状态
   store.setPlayerState(player.value.audioRef.paused);
   // 储存播放器信息
-  store.setPlayerData(playList.value[playIndex.value].name, playList.value[playIndex.value].artist);
+  store.setPlayerData(
+    playList.value[playIndex.value].name,
+    playList.value[playIndex.value].artist,
+  );
   ElMessage({
     message: store.getPlayerData.name + " - " + store.getPlayerData.artist,
     grouping: true,
@@ -137,7 +146,8 @@ const onPause = () => {
 
 // 音频时间更新事件
 const onTimeUp = () => {
-  let lyrics = player.value.aplayer.lyrics[playIndex.value];
+  if (!player.value) return;
+  let lyrics = player.value.aplayer.lyrics[player.value.aplayer.index];
   let lyricIndex = player.value.aplayer.lyricIndex;
   if (!lyrics || !lyrics[lyricIndex]) {
     return;
@@ -153,47 +163,45 @@ const onTimeUp = () => {
 
 // 切换播放暂停事件
 const playToggle = () => {
-  player.value.toggle();
+  player.value?.toggle();
 };
 
 // 切换音量事件
 const changeVolume = (value) => {
-  player.value.setVolume(value, false);
+  player.value?.setVolume(value, false);
 };
 
 // 切换上下曲
 const changeSong = (type) => {
+  if (!player.value) return;
   type === 0 ? player.value.skipBack() : player.value.skipForward();
   nextTick(() => {
-    player.value.play();
+    player.value?.play();
   });
 };
 
 // 切换歌曲列表状态
 const toggleList = () => {
-  player.value.toggleList();
+  player.value?.toggleList();
 };
 
 // 加载音频错误
 const loadMusicError = () => {
   let notice = "";
   if (playList.value.length > 1) {
-    notice = "播放歌曲出现错误，播放器将在 2s 后进行下一首";
+    notice = "歌曲暂不可用，请尝试切换下一首";
   } else {
     notice = "播放歌曲出现错误";
   }
   ElMessage({
     message: notice,
     grouping: true,
+    duration: 2000,
     icon: h(PlayWrong, {
       theme: "filled",
       fill: "#EFEFEF",
-      duration: 2000,
     }),
   });
-  console.error(
-    "播放歌曲: " + player.value.aplayer.audio[player.value.aplayer.index].name + " 出现错误",
-  );
 };
 
 // 暴露子组件方法

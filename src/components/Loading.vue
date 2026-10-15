@@ -1,5 +1,5 @@
 <template>
-  <div id="loader-wrapper" :class="store.imgLoadStatus ? 'loaded' : null">
+  <div id="loader-wrapper" :class="store.pageReady ? 'loaded' : null">
     <div class="loader">
       <div class="loader-circle" />
       <div class="loader-text">

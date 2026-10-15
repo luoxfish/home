@@ -3,14 +3,22 @@
   <div class="social">
     <div class="link">
       <a
-        v-for="item in socialLinks"
+        v-for="item in availableLinks"
         :key="item.name"
         :href="item.url"
         target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="item.name"
         @mouseenter="socialTip = item.tip"
         @mouseleave="socialTip = '通过这里联系我吧'"
       >
-        <img class="icon" :src="item.icon" height="24" />
+        <img
+          class="icon"
+          :src="item.icon"
+          :alt="item.name"
+          width="24"
+          height="24"
+        />
       </a>
     </div>
     <span class="tip">{{ socialTip }}</span>
@@ -19,6 +27,8 @@
 
 <script setup>
 import socialLinks from "@/assets/socialLinks.json";
+import { isSafeLink } from "@/utils/links.js";
+const availableLinks = socialLinks.filter((item) => isSafeLink(item.url));
 
 // 社交链接提示
 const socialTip = ref("通过这里联系我吧");

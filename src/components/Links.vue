@@ -1,5 +1,5 @@
 <template>
-  <div v-if="siteLinks[0]" class="links">
+  <div v-if="siteLinksList.length" class="links">
     <div class="line">
       <Icon size="20">
         <Link />
@@ -8,7 +8,7 @@
     </div>
     <!-- 网站列表 -->
     <Swiper
-      v-if="siteLinks[0]"
+      v-if="siteLinksList.length"
       :modules="[Pagination, Mousewheel]"
       :slides-per-view="1"
       :space-between="40"
@@ -19,19 +19,24 @@
       }"
       :mousewheel="true"
     >
-      <SwiperSlide v-for="site in siteLinksList" :key="site">
+      <SwiperSlide v-for="(site, page) in siteLinksList" :key="page">
         <el-row class="link-all" :gutter="20">
-          <el-col v-for="(item, index) in site" :span="8" :key="item">
-            <div
+          <el-col v-for="(item, index) in site" :span="8" :key="item.name">
+            <component
+              :is="isSafeLink(item.link) ? 'a' : 'button'"
+              :href="isSafeLink(item.link) ? item.link : undefined"
+              :type="isSafeLink(item.link) ? undefined : 'button'"
+              :target="isSafeLink(item.link) ? '_blank' : undefined"
+              rel="noopener noreferrer"
               class="item cards"
               :style="index < 3 ? 'margin-bottom: 20px' : null"
-              @click="jumpLink(item)"
+              @click="jumpLink($event, item)"
             >
               <Icon size="26">
                 <component :is="siteIcon[item.icon]" />
               </Icon>
               <span class="name text-hidden">{{ item.name }}</span>
-            </div>
+            </component>
           </el-col>
         </el-row>
       </SwiperSlide>
@@ -43,19 +48,37 @@
 <script setup>
 import { Icon } from "@vicons/utils";
 // 可前往 https://www.xicons.org 自行挑选并在此处引入
-import { Link, Blog, CompactDisc, Cloud, Compass, Book, Fire, LaptopCode } from "@vicons/fa"; // 注意使用正确的类别
+import {
+  Link,
+  Blog,
+  CompactDisc,
+  Cloud,
+  Compass,
+  Book,
+  Fire,
+  LaptopCode,
+} from "@vicons/fa"; // 注意使用正确的类别
 import { mainStore } from "@/store";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Pagination, Mousewheel } from "swiper/modules";
 import siteLinks from "@/assets/siteLinks.json";
+import { isSafeLink } from "@/utils/links.js";
 
 const store = mainStore();
+const hasPlayer = Boolean(
+  import.meta.env.VITE_SONG_ID && import.meta.env.VITE_SONG_API,
+);
 
 // 计算网站链接
 const siteLinksList = computed(() => {
+  const links = siteLinks.filter(
+    (item) =>
+      isSafeLink(item.link) ||
+      (item.name === "音乐" && hasPlayer && store.musicClick),
+  );
   const result = [];
-  for (let i = 0; i < siteLinks.length; i += 6) {
-    const subArr = siteLinks.slice(i, i + 6);
+  for (let i = 0; i < links.length; i += 6) {
+    const subArr = links.slice(i, i + 6);
     result.push(subArr);
   }
   return result;
@@ -73,17 +96,12 @@ const siteIcon = {
 };
 
 // 链接跳转
-const jumpLink = (data) => {
-  if (data.name === "音乐" && store.musicClick) {
-    if (typeof $openList === "function") $openList();
-  } else {
-    window.open(data.link, "_blank");
+const jumpLink = (event, data) => {
+  if (data.name === "音乐" && hasPlayer && store.musicClick) {
+    event.preventDefault();
+    store.musicListOpen = true;
   }
 };
-
-onMounted(() => {
-  console.log(siteLinks);
-});
 </script>
 
 <style lang="scss" scoped>

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 // ✅ 已为 EdgeOne Pages 部署优化：代码分包、Brotli/Gzip 双压缩、资源哈希命名
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
 import { resolve } from "path";
 import { VitePWA } from "vite-plugin-pwa";
@@ -8,20 +8,49 @@ import vue from "@vitejs/plugin-vue";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import viteCompression from "vite-plugin-compression";
+import { loadSiteEnv } from "./scripts/site-env.js";
 
 // https://vitejs.dev/config/
-export default ({ mode }) =>
-  defineConfig({
+export default ({ mode }) => {
+  const env = loadSiteEnv(mode);
+  return defineConfig({
+    define: Object.fromEntries(
+      Object.entries(env)
+        .filter(([key]) => key.startsWith("VITE_"))
+        .map(([key, value]) => [
+          `import.meta.env.${key}`,
+          JSON.stringify(value),
+        ]),
+    ),
     plugins: [
+      {
+        name: "site-html-defaults",
+        transformIndexHtml: {
+          enforce: "pre",
+          transform: (html) =>
+            html.replace(
+              /%([A-Z_]+)%/g,
+              (placeholder, key) => env[key] ?? placeholder,
+            ),
+        },
+      },
       vue(),
       AutoImport({
         imports: ["vue"],
+        dts: false,
         resolvers: [ElementPlusResolver()],
       }),
       Components({
+        dts: false,
         resolvers: [ElementPlusResolver()],
       }),
       VitePWA({
+        includeAssets: [
+          "images/background1.jpg",
+          "font/*.ttf",
+          "images/icon/*.png",
+          "images/icon/favicon.ico",
+        ],
         registerType: "autoUpdate",
         workbox: {
           skipWaiting: true,
@@ -29,7 +58,9 @@ export default ({ mode }) =>
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
           runtimeCaching: [
             {
-              urlPattern: /(.*?)\.(js|css|woff2|woff|ttf)/,
+              urlPattern: ({ url }) =>
+                url.origin === self.location.origin &&
+                /\.(js|css|woff2?|ttf)$/.test(url.pathname),
               handler: "CacheFirst",
               options: {
                 cacheName: "js-css-cache",
@@ -51,8 +82,7 @@ export default ({ mode }) =>
               },
             },
             {
-              urlPattern:
-                /^https:\/\/(v1\.hitokoto\.cn|restapi\.amap\.com|api\.oioweb\.cn|api-meting\.imsyy\.top)/,
+              urlPattern: /^https:\/\/v1\.hitokoto\.cn(?:\/|$)/,
               handler: "NetworkFirst",
               options: {
                 cacheName: "api-cache",
@@ -66,9 +96,9 @@ export default ({ mode }) =>
           ],
         },
         manifest: {
-          name: loadEnv(mode, process.cwd()).VITE_SITE_NAME,
-          short_name: loadEnv(mode, process.cwd()).VITE_SITE_NAME,
-          description: loadEnv(mode, process.cwd()).VITE_SITE_DES,
+          name: env.VITE_SITE_NAME,
+          short_name: env.VITE_SITE_NAME,
+          description: env.VITE_SITE_DES,
           display: "standalone",
           start_url: "/",
           theme_color: "#424242",
@@ -77,10 +107,26 @@ export default ({ mode }) =>
             { src: "/images/icon/48.png", sizes: "48x48", type: "image/png" },
             { src: "/images/icon/72.png", sizes: "72x72", type: "image/png" },
             { src: "/images/icon/96.png", sizes: "96x96", type: "image/png" },
-            { src: "/images/icon/128.png", sizes: "128x128", type: "image/png" },
-            { src: "/images/icon/144.png", sizes: "144x144", type: "image/png" },
-            { src: "/images/icon/192.png", sizes: "192x192", type: "image/png" },
-            { src: "/images/icon/512.png", sizes: "512x512", type: "image/png" },
+            {
+              src: "/images/icon/128.png",
+              sizes: "128x128",
+              type: "image/png",
+            },
+            {
+              src: "/images/icon/144.png",
+              sizes: "144x144",
+              type: "image/png",
+            },
+            {
+              src: "/images/icon/192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "/images/icon/512.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
           ],
         },
       }),
@@ -108,13 +154,7 @@ export default ({ mode }) =>
       ],
     },
     css: {
-      preprocessorOptions: {
-        scss: {
-          api: "modern",
-          additionalData: `@use "./src/style/global.scss" as *;`,
-          silenceDeprecations: ["legacy-js-api"],
-        },
-      },
+      preprocessorOptions: { scss: { silenceDeprecations: ["legacy-js-api"] } },
     },
     build: {
       target: "es2015",
@@ -131,10 +171,7 @@ export default ({ mode }) =>
         output: {
           manualChunks: {
             "vue-core": ["vue", "pinia", "pinia-plugin-persistedstate"],
-            "element-plus": ["element-plus"],
             swiper: ["swiper"],
-            aplayer: ["aplayer", "@worstone/vue-aplayer"],
-            utils: ["axios", "dayjs", "lodash-es", "fetch-jsonp"],
           },
           chunkFileNames: "assets/js/[name]-[hash].js",
           entryFileNames: "assets/js/[name]-[hash].js",
@@ -154,3 +191,4 @@ export default ({ mode }) =>
       },
     },
   });
+};

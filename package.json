@@ -7,14 +7,18 @@
   "version": "4.1.4",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
+    "dev": "vite --host 127.0.0.1",
+    "build": "pnpm run check:config && vite build && node scripts/check-build.js",
     "preview": "vite preview --host --port 4173",
     "format": "prettier --write src/",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix"
+    "lint": "eslint src edge-functions scripts tests vite.config.js --ext .js,.mjs,.vue --max-warnings 0",
+    "lint:fix": "eslint src edge-functions scripts tests vite.config.js --ext .js,.mjs,.vue --max-warnings 0 --fix",
+    "test": "node --test tests/*.test.js",
+    "check:config": "node scripts/check-config.js",
+    "check": "pnpm run lint && pnpm test && pnpm run build"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@worstone/vue-aplayer": "^1.0.6",
@@ -44,5 +48,6 @@
     "vite": "^4.5.3",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^0.14.7"
-  }
+  },
+  "packageManager": "pnpm@10.11.0"
 }

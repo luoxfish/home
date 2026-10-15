@@ -1,15 +1,19 @@
 <template>
-  <div class="set" @mouseenter="closeShow = true" @mouseleave="closeShow = false" @click.stop>
-    <transition name="el-fade-in-linear">
-      <close-one
-        class="close"
-        theme="filled"
-        size="28"
-        fill="#ffffff60"
-        v-show="closeShow"
-        @click="store.setOpenState = false"
-      />
-    </transition>
+  <div
+    class="set"
+    role="dialog"
+    aria-modal="true"
+    aria-label="全局设置"
+    @click.stop
+  >
+    <button
+      type="button"
+      class="close"
+      aria-label="关闭设置"
+      @click="store.setOpenState = false"
+    >
+      <close-one theme="filled" size="28" fill="#ffffff60" />
+    </button>
     <el-row :gutter="40">
       <el-col :span="12" class="left">
         <div class="logo text-hidden">
@@ -18,8 +22,19 @@
         </div>
         <div class="version">
           <div class="num">v&nbsp;{{ config.version }}</div>
-          <el-tooltip content="Github 源代码仓库" placement="right" :show-arrow="false">
-            <github-one class="github" theme="outline" size="24" @click="jumpTo(config.github)" />
+          <el-tooltip
+            content="Github 源代码仓库"
+            placement="right"
+            :show-arrow="false"
+          >
+            <a
+              :href="config.github"
+              class="github"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Github 源代码仓库"
+              ><github-one theme="outline" size="24"
+            /></a>
           </el-tooltip>
         </div>
         <el-card class="update">
@@ -52,25 +67,23 @@
 </template>
 
 <script setup>
-import { CloseOne, SettingTwo, GithubOne, AddOne, Bug } from "@icon-park/vue-next";
+import { splitSiteUrl } from "@/utils/links.js";
+import {
+  CloseOne,
+  SettingTwo,
+  GithubOne,
+  AddOne,
+  Bug,
+} from "@icon-park/vue-next";
 import { mainStore } from "@/store";
 import Set from "@/components/Set.vue";
 import config from "@/../package.json";
 
 const store = mainStore();
-const closeShow = ref(false);
+onMounted(() => document.querySelector(".set .close")?.focus());
 
 // 站点链接
-const siteUrl = computed(() => {
-  const url = import.meta.env.VITE_SITE_URL;
-  if (!url) return "imsyy.top".split(".");
-  // 判断协议前缀
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    const urlFormat = url.replace(/^(https?:\/\/)/, "");
-    return urlFormat.split(".");
-  }
-  return url.split(".");
-});
+const siteUrl = computed(() => splitSiteUrl(import.meta.env.VITE_SITE_URL));
 
 // 更新日志
 const upData = reactive({
@@ -80,13 +93,13 @@ const upData = reactive({
     "壁纸支持个性化设置",
     "音乐播放器支持音量控制",
   ],
-  fix: ["修复天气 API", "时光胶囊显示错误", "移动端动画及细节", "图标更换为 IconPark"],
+  fix: [
+    "修复天气 API",
+    "时光胶囊显示错误",
+    "移动端动画及细节",
+    "图标更换为 IconPark",
+  ],
 });
-
-// 跳转源代码仓库
-const jumpTo = (url) => {
-  window.open(url);
-};
 </script>
 
 <style lang="scss" scoped>
@@ -101,6 +114,7 @@ const jumpTo = (url) => {
   background: rgb(255 255 255 / 40%);
   border-radius: 6px;
   padding: 40px;
+  overflow-y: auto;
 
   .close {
     position: absolute;

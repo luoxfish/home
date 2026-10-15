@@ -8,32 +8,46 @@
   >
     <!-- 打开音乐面板 -->
     <Transition name="el-fade-in-linear">
-      <div
+      <button
+        type="button"
         class="open-music"
-        v-show="openMusicShow && store.musicIsOk"
-        @click="store.musicOpenState = true"
+        v-show="hasPlayer && (openMusicShow || store.innerWidth < 721)"
+        @click="
+          store.musicOpenState = true;
+          store.musicListOpen = !store.musicIsOk;
+        "
       >
         <music-menu theme="filled" size="18" fill="#efefef" />
         <span>打开音乐播放器</span>
-      </div>
+      </button>
     </Transition>
     <!-- 一言内容 -->
     <Transition name="el-fade-in-linear" mode="out-in">
-      <div :key="hitokotoData.text" class="content" @click="updateHitokoto">
+      <button
+        type="button"
+        :key="hitokotoData.text"
+        class="content"
+        aria-label="换一条一言"
+        @click="updateHitokoto"
+      >
         <span class="text">{{ hitokotoData.text }}</span>
         <span class="from">-「&nbsp;{{ hitokotoData.from }}&nbsp;」</span>
-      </div>
+      </button>
     </Transition>
   </div>
 </template>
 
 <script setup>
-import { MusicMenu, Error } from "@icon-park/vue-next";
+import { MusicMenu, Error as ErrorIcon } from "@icon-park/vue-next";
 import { getHitokoto } from "@/api";
 import { mainStore } from "@/store";
 import debounce from "@/utils/debounce.js";
 
 const store = mainStore();
+const hasPlayer = Boolean(
+  import.meta.env.VITE_SONG_ID && import.meta.env.VITE_SONG_API,
+);
+const controller = new AbortController();
 
 // 开启音乐面板按钮显隐
 const openMusicShow = ref(false);
@@ -47,13 +61,16 @@ const hitokotoData = reactive({
 // 获取一言数据
 const getHitokotoData = async () => {
   try {
-    const result = await getHitokoto();
+    const result = await getHitokoto({ signal: controller.signal });
+    if (!result?.hitokoto || typeof result.hitokoto !== "string")
+      throw new Error("无效的一言内容");
     hitokotoData.text = result.hitokoto;
     hitokotoData.from = result.from;
-  } catch (error) {
+  } catch {
+    if (controller.signal.aborted) return;
     ElMessage({
       message: "一言获取失败",
-      icon: h(Error, {
+      icon: h(ErrorIcon, {
         theme: "filled",
         fill: "#efefef",
       }),
@@ -64,12 +81,11 @@ const getHitokotoData = async () => {
 };
 
 // 更新一言数据
-const updateHitokoto = () => {
-  // 防抖
-  debounce(() => {
-    getHitokotoData();
-  }, 500);
-};
+const updateHitokoto = debounce(getHitokotoData, 500);
+onBeforeUnmount(() => {
+  controller.abort();
+  updateHitokoto.cancel();
+});
 
 onMounted(() => {
   getHitokotoData();
@@ -104,6 +120,8 @@ onMounted(() => {
     }
   }
   .content {
+    width: 100%;
+    text-align: left;
     height: 100%;
     display: flex;
     flex-direction: column;
