@@ -6,28 +6,12 @@ export default function cursorInit() {
   document.body.append(cursor);
   const controller = new AbortController();
   const options = { signal: controller.signal, passive: true };
-  let frame = null;
-  let current;
-  let target;
-  const move = () => {
-    frame = null;
-    if (!current || !target) return;
-    current.x += (target.x - current.x) * 0.35;
-    current.y += (target.y - current.y) * 0.35;
-    cursor.style.transform =
-      "translate3d(" + current.x + "px, " + current.y + "px, 0)";
-    if (Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > 0.1) {
-      frame = requestAnimationFrame(move);
-    }
-  };
   document.addEventListener(
     "pointermove",
     (event) => {
       if (event.pointerType === "touch") return;
-      target = { x: event.clientX - 9, y: event.clientY - 9 };
-      current ||= { ...target };
+      cursor.style.translate = `${event.clientX - 9}px ${event.clientY - 9}px`;
       cursor.classList.remove("hidden");
-      if (frame === null) frame = requestAnimationFrame(move);
     },
     options,
   );
@@ -49,7 +33,6 @@ export default function cursorInit() {
   return {
     destroy() {
       controller.abort();
-      if (frame !== null) cancelAnimationFrame(frame);
       cursor.remove();
     },
   };
