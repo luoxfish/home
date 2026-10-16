@@ -27,8 +27,7 @@ export async function onRequest(context) {
   try {
     let city = context.env.WEATHER_CITY;
     if (!city) {
-      const ip =
-        context.clientIp || context.request.headers.get("EO-Connecting-IP");
+      const ip = context.request.eo?.clientIp;
       // 不使用边缘节点出口 IP 推断访客城市。
       if (!ip) return json({ error: "Visitor location is unavailable" }, 503);
       const location = await read(

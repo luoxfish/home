@@ -4,10 +4,10 @@ import { onRequest } from "../edge-functions/api/weather.js";
 
 const context = (env = {}, method = "GET") => ({
   env,
-  request: new Request("https://home.example/api/weather", {
-    method,
-    headers: { "EO-Connecting-IP": "203.0.113.5" },
-  }),
+  request: Object.assign(
+    new Request("https://home.example/api/weather", { method }),
+    { eo: { clientIp: "203.0.113.5" } },
+  ),
 });
 test("未配置 Key 和不支持的方法不会访问上游", async (t) => {
   t.mock.method(globalThis, "fetch", () => {
@@ -73,6 +73,20 @@ test("代理错误不泄漏密钥或上游 URL", async (t) => {
 test("没有可信访客 IP 时不使用出口 IP", async (t) => {
   const visitor = context({ WEATHER_KEY: "test-key" });
   visitor.request = new Request("https://home.example/api/weather");
+  t.mock.method(globalThis, "fetch", () => {
+    throw new Error("Must not fetch");
+  });
+  assert.equal((await onRequest(visitor)).status, 503);
+});
+
+test("客户端伪造的 IP 请求头不能替代平台访客 IP", async (t) => {
+  const visitor = context({ WEATHER_KEY: "test-key" });
+  visitor.request = new Request("https://home.example/api/weather", {
+    headers: {
+      "EO-Connecting-IP": "198.51.100.10",
+      "X-Forwarded-For": "198.51.100.11",
+    },
+  });
   t.mock.method(globalThis, "fetch", () => {
     throw new Error("Must not fetch");
   });
